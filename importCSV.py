@@ -17,40 +17,71 @@ def symbol_to_path(symbol, base_dir="data"):
 
 
 def get_data(logfile, dates):
-    """Read stock data (adjusted close) for given symbols from CSV files."""
-    df = pd.DataFrame()
-    #if 'SPY' not in symbols:  # add SPY for reference, if absent
-     #   symbols.insert(0, 'SPY')
-
-     #dateparse = lambda x: [pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S') for d in dates]
+    """Read trade data (adjusted close) for given symbols from CSV files."""
+    
+    #dateparse = lambda x: [pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S') for d in dates] # Create custom time format
 
     df_temp = pd.read_csv(symbol_to_path(logfile),
-                             parse_dates=True, usecols=['time', 'type', 'pair', 'vol', 'price', 'cost', 'fee'])
-        #df_temp = df_temp.rename(Columns={'time': 'Date'})
-    #somelist = df_temp['time'].tolist()
-    datelist = df_temp['time'].tolist() 
-    timeformat = pd.to_datetime(pd.Series(datelist))
-    #print df_temp
-    df = df.join(df_temp)
-    print timeformat
+        parse_dates=True, usecols=['time', 'type', 'pair', 'vol', 'price', 'cost', 'fee'])
+    
+    df_temp['time'] = pd.to_datetime(df_temp['time'])   # Change date string to Timestamp and drop time component
+    
+    #df_temp = df_temp.rename(columns={"time": "Date"}) #Rename column
+    #df=pd.DataFrame(index=dates) # Create dataframe with Timestamp index
+    
+    df=df_temp
+        
     return df
-
+    
+def record_trade(df):
+    trade_log = df.copy
+    BTC_pair = "XBTCZUSD"
+    ETH_pair = "XETHZUSD"
+    BTC_count = 0
+    ETH_count = 0
+    
+    #print df['pair'].item
+    
+    # Filter dataframe by currency pair
+    p_group = df.groupby('pair') 
+    new_group = p_group.get_group(ETH_pair)
+    print new_group
+    
+    for i in new_group.index:
+        if  new_group.loc[i].type == "buy":
+            ETH_count = ETH_count + new_group.loc[i].vol
+            while ETH_count
+         #   p_group.get_group(ETH_pair).vol[i].values
+         #   print p_group.get_group(ETH_pair).vol[i:].values
+         #   print p_group.get_group(ETH_pair).type[0]
+        
+        
+        
+        #if df.type[i:].values = "buy":
+         #   ETH_count = ETH_count + df.vol[i:].values
+        #print df.type
+        #while ETH_count != 0:
+        
+   
 
 def sort_date():
-    # Define a date range
-    dates = pd.date_range('03/25/2017 04:18:32.3478', '03/25/2017 06:04:17.4039')
+    # Define a date range. Currently unused.
+    dates = pd.date_range('2017-03-25', '2017-03-26')
 
-    # Choose stock symbols to read
+    # Choose trading log to read
     krakenlog = 'trades'
     
-    # Version Stamp
-    print ('Pandas Version:'), pd.__version__
-    # Get stock data
+    # Get trade data
     df = get_data(krakenlog, dates)
-    print df
-
+    
+    # Select rows based on month
+    t_df = df[df.time.dt.month == 03] 
+    
+    # Separate raw trade data into actual trades
+    record_trade(t_df)
+     
 
 if __name__ == "__main__":
+    # Version Stamp
+    print ('Pandas Version:'), pd.__version__
     sort_date()
-
-
